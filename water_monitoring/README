@@ -1,0 +1,392 @@
+# Water Monitoring System 💧
+
+Sistema de monitoreo de consumo de agua con visualización en mapa interactivo, estadísticas y gestión de contadores. **Integrado con sistema de detección automática de lecturas mediante IA (YOLO)**.
+
+## 🌟 Características
+
+- **🤖 Integración con IA**: Recibe lecturas automáticas desde `water-meter-detection` mediante el endpoint `/api/public/reading/`
+- **🗺️ Dashboard Interactivo**: Mapa con visualización en tiempo real de contadores (Leaflet + PostGIS)
+- **📊 Análisis de Consumo**: Gráficas interactivas, estadísticas y detección de picos
+- **⚙️ Gestión Completa**: CRUD de modelos de contadores y contadores individuales
+- **📤 Importación CSV**: Carga masiva de datos históricos
+- **🔌 API REST Completa**: Django REST Framework con endpoints públicos y autenticados
+
+---
+
+## 🔧 Tecnologías
+
+- **Backend**: Django 4.0+, Django REST Framework
+- **Base de datos**: PostgreSQL + PostGIS (datos geoespaciales)
+- **Configuración**: python-decouple (variables de entorno)
+- **Frontend**: Tailwind CSS, Alpine.js, Leaflet (mapas), Chart.js (gráficas)
+- **Integración**: Recibe lecturas automáticas desde el modelo YOLO
+
+---
+
+## 📋 Requisitos Previos
+
+- Python 3.8+
+- PostgreSQL 12+ con extensión PostGIS
+- GDAL (para GeoDjango)
+
+### Instalar dependencias del sistema
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get update
+sudo apt-get install -y python3-pip python3-venv postgresql postgresql-contrib postgis gdal-bin libgdal-dev
+```
+
+**macOS:**
+```bash
+brew install postgresql postgis gdal
+```
+
+---
+
+## 🚀 Instalación
+
+### Linux/macOS (con script automático)
+
+```bash
+cd water_monitoring
+chmod +x setup.sh
+./setup.sh
+```
+
+El script realizará automáticamente:
+- Creación del entorno virtual
+- Instalación de dependencias
+- Configuración de la base de datos
+- Creación del superusuario
+
+### Windows (PowerShell)
+
+1. **Crear entorno virtual e instalar dependencias:**
+
+```powershell
+cd water_monitoring
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+2. **Configurar variables de entorno (`.env`):**
+
+Crea un archivo `.env` en la raíz del proyecto:
+
+```env
+SECRET_KEY=tu_secret_key_aqui
+DEBUG=True
+DB_NAME=water_monitoring_db
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_HOST=127.0.0.1
+DB_PORT=5432
+ADMIN_USERNAME=admin
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=admin123
+```
+
+3. **Preparar la base de datos:**
+
+```powershell
+python manage.py makemigrations
+python manage.py migrate
+python manage.py create_admin
+```
+
+4. **Ejecutar el servidor:**
+
+```powershell
+python manage.py runserver
+```
+
+---
+
+## 📍 Acceso a la Aplicación
+
+- **Dashboard**: http://127.0.0.1:8000/
+- **Panel de administración SPA**: http://127.0.0.1:8000/admin-panel/
+- **Django Admin clásico**: http://127.0.0.1:8000/admin/
+
+---
+
+## 🔌 API Endpoints
+
+### 🤖 **Integración con IA (water-meter-detection)**
+
+#### **POST** `/api/public/reading/` 
+**✨ Endpoint principal para recibir lecturas desde el modelo YOLO**
+
+Este endpoint recibe las lecturas detectadas automáticamente por el sistema de visión artificial. El backend de Python (`water-meter-detection/backend_python/src/main.py`) procesa la imagen del medidor con YOLO, extrae los dígitos y envía la lectura aquí.
+
+**Sin autenticación requerida** - Diseñado para IoT/IA
+
+**Request Body:**
+```json
+{
+  "meter_id": "MTR001",
+  "accumulated_value": 1234.56,
+  "timestamp": "2024-12-09T10:30:00Z"  // Opcional, usa fecha actual si se omite
+}
+```
+
+**Response (201 Created):**
+```json
+{
+  "success": true,
+  "reading_id": 123,
+  "meter_id": "MTR001",
+  "accumulated_value": 1234.56,
+  "timestamp": "2024-12-09T10:30:00Z"
+}
+```
+
+**🔄 Flujo completo de integración:**
+```
+1. ESP32 CAM / Web captura imagen del medidor
+   ↓
+2. Backend Python (FastAPI) recibe imagen en /upload o /test-web
+   ↓
+3. YOLO procesa imagen y detecta dígitos (process_image_yolo)
+   ↓
+4. Dígitos se ordenan por posición X y se construye lectura
+   ↓
+5. save_reading() hace POST a /api/public/reading/
+   ↓
+6. Django (water_monitoring) almacena en PostgreSQL
+   ↓
+7. Cálculo automático de consumo vs lectura anterior
+   ↓
+8. Dashboard actualiza mapa y gráficas en tiempo real
+```
+
+#### **POST** `/api/public/readings/bulk/` 
+**Registro masivo de lecturas**
+
+Para enviar múltiples lecturas en una sola petición (útil para procesamiento batch).
+
+**Request Body:**
+```json
+{
+  "readings": [
+    {
+      "meter_id": "MTR001",
+      "accumulated_value": 1234.56,
+      "timestamp": "2024-12-09T10:30:00Z"
+    },
+    {
+      "meter_id": "MTR002",
+      "accumulated_value": 9876.54,
+      "timestamp": "2024-12-09T10:35:00Z"
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "created": 2,
+  "failed": 0,
+  "created_readings": [
+    {"index": 0, "reading_id": 123, "meter_id": "MTR001"},
+    {"index": 1, "reading_id": 124, "meter_id": "MTR002"}
+  ],
+  "errors": []
+}
+```
+
+---
+
+### 🔐 Endpoints Autenticados (requieren sesión Django)
+
+Para llamadas fetch desde el frontend, incluye `credentials: 'same-origin'` para enviar cookies de sesión.
+
+#### **Modelos de Contadores**
+- **GET** `/api/models/` - Listar todos los modelos (paginado)
+- **POST** `/api/models/` - Crear nuevo modelo
+- **GET** `/api/models/{id}/` - Detalles de un modelo
+- **PUT/PATCH** `/api/models/{id}/` - Actualizar modelo
+- **DELETE** `/api/models/{id}/` - Eliminar modelo
+- **GET** `/api/models/{id}/meters/` - Contadores de este modelo
+
+#### **Contadores**
+- **GET** `/api/meters/` - Listar contadores (paginado)
+- **POST** `/api/meters/` - Crear nuevo contador
+- **GET** `/api/meters/{id}/` - Detalles de un contador
+- **PUT/PATCH** `/api/meters/{id}/` - Actualizar contador
+- **DELETE** `/api/meters/{id}/` - Eliminar (soft delete)
+- **GET** `/api/meters/geojson/` - Formato GeoJSON para mapas
+- **GET** `/api/meters/{id}/readings/?days=30` - Lecturas de un contador
+- **GET** `/api/meters/{id}/stats/?days=30` - Estadísticas de consumo
+- **GET** `/api/meters/{id}/consumption_chart/?days=30` - Datos para gráficas
+
+#### **Lecturas**
+- **GET** `/api/readings/?meter_id=MTR001` - Listar lecturas (filtrable)
+- **POST** `/api/readings/` - Crear lectura manualmente
+- **GET** `/api/readings/{id}/` - Detalles de una lectura
+- **PUT/PATCH** `/api/readings/{id}/` - Actualizar lectura
+- **DELETE** `/api/readings/{id}/` - Eliminar lectura
+
+#### **Importación**
+- **POST** `/api/import-csv/` - Importar lecturas desde CSV
+  - Content-Type: `multipart/form-data`
+  - Campo: `file`
+  - Formato: `meter_id,accumulated_value,timestamp`
+
+---
+
+## 🔗 Arquitectura del Sistema Completo
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  water-meter-detection                      │
+│  ┌──────────────┐      ┌─────────────────────────────┐     │
+│  │   ESP32 CAM  │──────▶  Backend Python (FastAPI)   │     │
+│  │  Web Upload  │      │  - YOLO Model (best_m.pt)   │     │
+│  └──────────────┘      │  - Digit Detection          │     │
+│                        │  - Reading Extraction        │     │
+│                        └──────────────┬──────────────┘     │
+└────────────────────────────────────────┼──────────────────┘
+                                         │
+                         POST /api/public/reading/
+                         { meter_id, accumulated_value }
+                                         │
+                                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   water_monitoring (Django)                 │
+│  ┌────────────────────────────────────────────────────┐    │
+│  │  API REST (Django REST Framework)                  │    │
+│  │  - Recibe lecturas desde IA                        │    │
+│  │  - Calcula consumo automático                      │    │
+│  │  - Almacena en PostgreSQL + PostGIS                │    │
+│  └──────────────────┬─────────────────────────────────┘    │
+│                     │                                       │
+│  ┌──────────────────▼─────────────────────────────────┐    │
+│  │  Dashboard Web                                      │    │
+│  │  - Mapa interactivo (Leaflet)                       │    │
+│  │  - Gráficas de consumo (Chart.js)                   │    │
+│  │  - Panel de administración                          │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📊 Importación CSV
+
+Formato esperado:
+
+```csv
+meter_id,accumulated_value,timestamp
+MTR001,12345.67,2024-01-15 10:30:00
+MTR002,98765.43,2024-01-15 10:35:00
+```
+
+Puedes importar desde:
+1. La pestaña "Importar Datos" en el panel de administración
+2. El endpoint `/api/import-csv/` (requiere autenticación)
+
+---
+
+## 🔐 Configuración de Seguridad (Producción)
+
+Para producción, asegúrate de:
+
+1. **Cambiar SECRET_KEY** en `.env`
+2. **Configurar DEBUG=False**
+3. **Ajustar ALLOWED_HOSTS** con tus dominios
+4. **Usar contraseñas fuertes** para el admin
+5. **Configurar HTTPS**
+6. **Habilitar cookies seguras**:
+   ```python
+   SESSION_COOKIE_SECURE = True
+   CSRF_COOKIE_SECURE = True
+   ```
+7. **Proteger endpoints públicos**:
+   - Implementa rate limiting en `/api/public/reading/`
+   - Considera autenticación por API key para el sistema de IA
+   - Valida que los `meter_id` existan antes de procesar
+   - Monitorea lecturas sospechosas o duplicadas
+
+---
+
+## 🆕 Notas Importantes
+
+- **Paginación**: El frontend maneja respuestas paginadas de DRF (usa `data.results`)
+- **Logout**: Vista personalizada que acepta GET/POST para evitar errores 405
+- **Autenticación**: Las APIs autenticadas usan `SessionAuthentication`
+- **Fetch**: Incluye `credentials: 'same-origin'` al llamar endpoints autenticados desde el navegador
+- **Consumo**: Se calcula automáticamente entre lecturas consecutivas
+- **Coordenadas**: Almacenadas en formato PostGIS (SRID 4326)
+
+---
+
+## 🐛 Troubleshooting
+
+### Error de GDAL
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install gdal-bin libgdal-dev
+
+# macOS
+brew install gdal
+```
+
+### Error de PostGIS
+
+```bash
+sudo -u postgres psql -d water_monitoring_db -c "CREATE EXTENSION IF NOT EXISTS postgis;"
+```
+
+### Error de permisos en PostgreSQL
+
+```bash
+sudo -u postgres psql
+ALTER USER postgres WITH PASSWORD 'tu_password';
+\q
+```
+
+### Error 405 en logout
+
+Ya resuelto con vista personalizada. Si prefieres logout estricto por POST, modifica el enlace en `templates/base.html` a un formulario con CSRF.
+
+### Respuestas vacías en la UI
+
+Si creas endpoints nuevos que devuelven listas, verifica si DRF los pagina automáticamente y ajusta el frontend para usar `data.results`.
+
+---
+
+## 📦 requirements.txt
+
+```txt
+Django>=4.0
+djangorestframework>=3.14
+python-decouple>=3.7
+psycopg2-binary>=2.9
+```
+
+---
+
+## 🤝 Contribuir
+
+1. Fork el proyecto
+2. Crea una rama (`git checkout -b feature/nueva-funcionalidad`)
+3. Commit tus cambios (`git commit -am 'Agrega nueva funcionalidad'`)
+4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
+5. Abre un Pull Request
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT.
+
+---
+
+**Hecho con ❤️ para monitoreo de agua**

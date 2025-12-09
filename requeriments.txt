@@ -1,0 +1,23 @@
+# Django and PostgreSQL
+Django==4.2.7
+psycopg2-binary==2.9.9
+
+# GDAL - Comentado por problemas en Windows
+# GDAL==3.7.3
+
+# REST Framework
+djangorestframework==3.14.0
+djangorestframework-gis==1.0
+
+# Environment variables
+python-decouple==3.8
+
+# CORS
+django-cors-headers==4.3.0
+
+# Pillow - Versión actualizada
+Pillow==10.4.0
+
+# Para desarrollo
+ipython==8.17.2
+django-extensions==3.2.3

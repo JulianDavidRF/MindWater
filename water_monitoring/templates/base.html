@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Water Monitoring System{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    
+    <style>
+        [x-cloak] { display: none !important; }
+        
+        .leaflet-container {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .meter-marker {
+            background-color: #3b82f6;
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .meter-marker.inactive {
+            background-color: #9ca3af;
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50">
+    <!-- Navbar -->
+    <nav class="bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <svg class="w-8 h-8 text-white mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <span class="text-white text-xl font-bold">Water Monitoring</span>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'meters:dashboard' %}" class="text-white hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium transition">
+                        Dashboard
+                    </a>
+                    <a href="{% url 'meters:admin_panel' %}" class="text-white hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium transition">
+                        Administración
+                    </a>
+                    <a href="/admin/" class="text-white hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium transition">
+                        Django Admin
+                    </a>
+                    {% if user.is_authenticated %}
+                    <div class="text-white border-l border-blue-400 pl-4 flex items-center space-x-2">
+                        <span class="text-sm">{{ user.username }}</span>
+                        <a href="/admin/logout/" class="text-xs bg-blue-800 hover:bg-blue-900 px-2 py-1 rounded">Salir</a>
+                    </div>
+                    {% else %}
+                    <a href="/admin/" class="text-white bg-blue-800 hover:bg-blue-900 px-3 py-2 rounded-md text-sm font-medium transition">
+                        Iniciar Sesión
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

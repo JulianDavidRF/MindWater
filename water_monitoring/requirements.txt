@@ -1,0 +1,20 @@
+# Core dependencies
+Django>=4.2,<5.0
+djangorestframework>=3.14,<4.0
+python-decouple>=3.7
+psycopg2-binary>=2.9
+
+# Optional / Useful
+# If you deploy with Gunicorn
+gunicorn>=20.1
+
+# Development / linters (optional)
+black>=23.9.1
+flake8>=6.0
+
+# Notes:
+# - If you use GeoDjango/PostGIS, install the system libraries (gdal, libgdal-dev)
+#   before installing Python packages. On many systems you don't need extra pip
+#   packages for PostGIS support beyond psycopg2-binary.
+# - Frontend libraries (Tailwind, Alpine.js, Leaflet, Chart.js) are included via CDN
+#   in templates, so they are not listed here.
