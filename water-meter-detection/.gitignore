@@ -1,0 +1,111 @@
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.pyre/
+.python-version
+
+# Virtual environments
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Packaging / build
+build/
+dist/
+*.egg-info/
+.eggs/
+*.whl
+pip-wheel-metadata/
+*.egg
+MANIFEST
+
+# IDEs / editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+*.iml
+
+# Jupyter
+.ipynb_checkpoints
+
+# Data, models, artifacts
+*.h5
+*.hdf5
+*.ckpt
+*.pth
+#*.pt
+*.pb
+*.onnx
+*.tflite
+*.tfrecord
+*.tfrecords
+*.sqlite
+*.db
+
+# Logs and experiments
+logs/
+*.log
+runs/
+wandb/
+mlruns/
+experiment/
+*.out
+
+# Secrets and env
+.env
+.env.*
+secrets.json
+credentials.json
+*.pem
+*.key
+
+# Large files / caches
+*.tar.gz
+*.tgz
+*.zip
+*.gz
+*.cache
+.cache/
+node_modules/
+
+# CI / coverage
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+pytest_cache/
+coverage.xml
+junit*.xml
+
+# Docker
+docker-compose.override.yml
+.docker/
+
+# Misc
+# lockfiles that should not be committed
+poetry.lock
+Pipfile.lock
+# Generated files
+*.log
+*.aux
+*.out
+
+# Windows thumbnail cache and other temp files
+ehthumbs.db
+Icon?
